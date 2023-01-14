@@ -1,0 +1,73 @@
+name: Rust Continuous Integration
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check-package:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Check out the repo
+      uses: actions/checkout@v3.3.0
+
+    - name: Set up rust toolchain
+      uses: actions-rs/toolchain@v1.0.6
+      with:
+        toolchain: stable
+        components: rustfmt, clippy
+
+    - name: Check package
+      run: cargo check
+
+    - name: Check source formatting
+      run: cargo fmt --check
+
+    - name: Check common mistakes
+      run: cargo clippy
+
+    - name: Check dependencies
+      run: |
+        cargo install cargo-audit
+        cargo audit
+
+  build-package:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Check out the repo
+      uses: actions/checkout@v3.3.0
+
+    - name: Set up rust toolchain
+      uses: actions-rs/toolchain@v1.0.6
+      with:
+        toolchain: stable
+
+    - name: Build package
+      run: cargo build --release
+
+  test-package:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Check out the repo
+      uses: actions/checkout@v3.3.0
+
+    - name: Set up rust toolchain
+      uses: actions-rs/toolchain@v1.0.6
+      with:
+        toolchain: stable
+
+    - name: Run package tests
+      run: |
+        cargo install cargo-tarpaulin
+        cargo tarpaulin --out Xml
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3.1.1
+      with:
+        files: cobertura.xml
+        fail_ci_if_error: true
